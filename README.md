@@ -24,16 +24,6 @@ python main.py## Команды
 - `mv [source] [destination]` - перемещение/переименование
 - `rm [file] [-r]` - удаление файлов/директорий
 
-### Расширенные возможности
-
-- `zip [folder] [archive.zip]` - создание ZIP архива
-- `unzip [archive.zip]` - распаковка ZIP
-- `tar [folder] [archive.tar.gz]` - создание TAR.GZ архива
-- `untar [archive.tar.gz]` - распаковка TAR.GZ
-- `grep [pattern] [path] [-r] [-i]` - поиск по содержимому файлов
-- `history [n]` - просмотр истории команд
-- `undo` - отмена последней операции (cp/mv/rm)
-
 
 ## Структура проекта
 
