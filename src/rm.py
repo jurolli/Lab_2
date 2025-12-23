@@ -1,76 +1,89 @@
-import shutil   # модуль для удаления директорий рекурсивно
-import os       # модуль для работы с файловой системой
-from log import log   # функция логирования
+import shutil  
+import os  
+import time   
+from log import log 
 
-TRASH_DIR = ".trash"    # каталог для временного хранения удалённых объектов
+# Директория для корзины (удаленные файлы перемещаются сюда)
+TRASH_DIR = ".trash"  
 
-# создаём каталог .trash, если он ещё не существует
+# Создаем директорию корзины, если она не существует
 os.makedirs(TRASH_DIR, exist_ok=True)
 
 def rm(st):
+    recur = ''  # Флаг рекурсивного удаления (-r)
+    path = ''   # Путь к удаляемому объекту
 
-    recur = ''   # флаг для рекурсивного удаления
-    path = ''    # путь к файлу или каталогу
-
-    # разбор токенов
+    # Проверка наличия необходимых аргументов
     if len(st) < 2:
         print("Ошибка: не указан путь для удаления")
-        log(" ".join(st), success=False, error="No path specified")
+        log(" ".join(st), success = False, error = "No path specified")
         return
 
-    if st[1] == '-r':   # если указан флаг -r
+    # Обработка флага рекурсивного удаления
+    if st[1] == '-r': 
         recur = '-r'
         if len(st) < 3:
+            # Проверка наличия пути после флага -r
             print("Ошибка: не указан каталог для рекурсивного удаления")
-            log(" ".join(st), success=False, error="No directory specified for recursive delete")
+            log(" ".join(st), success = False, error = "No directory specified for recursive delete")
             return
         path = st[2]
     else:
         path = st[1]
 
-    command = ' '.join(st)   # собираем команду обратно в строку для логирования
+    command = ' '.join(st)  # Полная команда для логирования
 
-    # защита от удаления корня или родительского каталога
+    # Защита от удаления системных директорий
     if path in ['/', '..']:
         error = 'Удаление запрещено: корневой или родительский каталог'
-        print(f'Ошибка: {error}')
-        log(command, success=False, error=error)
+        print(f'Ошибка:Удаление запрещено: корневой или родительский каталог')
+        log(command, success = False, error = error)
         return
 
     try:
-        # проверяем, существует ли путь
+        # Проверка существования удаляемого объекта
         if not os.path.exists(path):
             raise FileNotFoundError('Файл или каталог не существует')
 
-        # если путь — каталог
+        # Удаление директории
         if os.path.isdir(path):
-            if recur == '':   # без флага -r удалять каталог нельзя
+            if recur == '': 
+                # Ошибка: попытка удалить директорию без флага -r
                 raise IsADirectoryError('Это каталог. Используйте -r для рекурсивного удаления')
-            elif recur == '-r':   # рекурсивное удаление каталога
+            elif recur == '-r':  
+                # Запрос подтверждения для рекурсивного удаления директории
                 confirm = input(f"Вы уверены, что хотите удалить каталог '{path}' и всё его содержимое? (y/n): ")
-                if confirm.lower() != 'y':   # если пользователь отказался
+                if confirm.lower() != 'y': 
                     print('Удаление отменено.')
-                    log(command, success=False, error='Удаление отменено пользователем')
+                    log(command, success = False, error = 'Удаление отменено пользователем')
                     return
-                # перемещаем каталог в .trash
+
+                # Формирование пути в корзине для директории
                 trash_path = os.path.join(TRASH_DIR, os.path.basename(path))
-                # если файл с таким именем уже есть в .trash, добавляем уникальный суффикс
+
+                # Если файл с таким именем уже есть в корзине - добавляем временную метку
                 if os.path.exists(trash_path):
-                    import time
                     trash_path = os.path.join(TRASH_DIR, f"{os.path.basename(path)}_{int(time.time())}")
+                
+                # Перемещение директории в корзину
                 shutil.move(path, trash_path)
         else:
-            # перемещаем файл в .trash вместо прямого удаления
+            # Удаление файла
+            # Формирование пути в корзине для файла
             trash_path = os.path.join(TRASH_DIR, os.path.basename(path))
-            # если файл с таким именем уже есть в .trash, добавляем уникальный суффикс
+            
+            # Если файл с таким именем уже есть в корзине - добавляем временную метку
             if os.path.exists(trash_path):
-                import time
                 trash_path = os.path.join(TRASH_DIR, f"{os.path.basename(path)}_{int(time.time())}")
+            
+            # Перемещение файла в корзину
             shutil.move(path, trash_path)
 
-        print(f'Удалено: {path}')   # сообщение об успехе
-        log(command, success=True)   # логируем успешное выполнение
+        # Сообщение об успешном удалении
+        print(f'Удалено: {path}')  
+        log(command, success = True) 
 
-    except Exception as e:   # если возникла ошибка
-        print(f"Ошибка: не удалось удалить '{path}' — {e}")   # выводим сообщение об ошибке
-        log(command, success=False, error=str(e))   # логируем неудачное выполнение
+    except Exception as e:
+        # Обработка ошибок при удалении
+        print(f"Ошибка: не удалось удалить '{path}' — {e}")  
+        log(command, success = False, error = str(e))

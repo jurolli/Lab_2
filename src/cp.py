@@ -1,52 +1,60 @@
-import shutil   # модуль для копирования файлов и директорий
-import os       # модуль для работы с файловой системой
-from log import log   # функция логирования
+import shutil 
+import os     
+from log import log  
 
 def cp(st):
+    # st - список аргументов команды (первый элемент - сама команда 'cp')
+    
+    recur = ''   # Флаг рекурсивного копирования (-r)
+    what = ''    # Что копировать 
+    where = ''   # Куда копировать
 
-    recur = ''   # флаг для рекурсивного копирования директорий
-    what = ''    # источник (файл или папка)
-    where = ''   # назначение (куда копировать)
-
-    # разбор токенов
-  # если второй токен — флаг "-r"
+    # Обработка аргументов команды
     if len(st) > 1 and st[1] == '-r':
+        # Рекурсивное копирование с флагом -r
         recur = '-r'
-        if len(st) < 4:   # нужно минимум 4 токена: cp -r source dest
+        if len(st) < 4: 
+            # Проверка наличия всех необходимых аргументов
             print("Ошибка: недостаточно аргументов для рекурсивного копирования")
             log(" ".join(st), success=False, error="Not enough arguments for recursive copy")
             return
-        what = st[2]
-        where = st[3]
+        what = st[2]    # Источник после флага -r
+        where = st[3]   # Цель после флага -r
     else:
-        # обычное копирование: cp source dest
+        # Обычное копирование без флага -r
         if len(st) < 3:
+            # Проверка наличия всех необходимых аргументов
             print("Ошибка: недостаточно аргументов для копирования")
             log(" ".join(st), success=False, error="Not enough arguments")
             return
-        what = st[1]
-        where = st[2]
+        what = st[1]    # Источник
+        where = st[2]   # Цель
 
-    command = ' '.join(st)   # собираем команду обратно в строку для логирования
+    command = ' '.join(st)  # Полная команда для логирования
 
     try:
-        # проверяем, существует ли источник
+        # Проверка существования источника
         if not os.path.exists(what):
             raise FileNotFoundError('Source does not exist')
 
-        # если источник — директория
+        # Копирование в зависимости от типа источника
         if os.path.isdir(what):
-            if recur == '-r':   # рекурсивное копирование папки
+            # Источник - директория
+            if recur == '-r':
+                # Рекурсивное копирование директории со всем содержимым
                 shutil.copytree(what, where)
-            else:   # без флага -r копировать папку нельзя
+            else: 
+                # Ошибка: копирование директории без флага -r
                 raise IsADirectoryError('Source is a directory. Use -r for recursive copy')
         else:
-            # копирование файлаа
-            shutil.copy2(what, where)
+            # Источник - файл
+            shutil.copy2(what, where)  # copy2 сохраняет метаданные
 
-        print(f'Успешно скопировано: {what} {where}')   # сообщение об успехе
-        log(command, success=True)   # логируем успешное выполнение
+        # Успешное завершение операции
+        print(f'Успешно скопировано: {what} {where}') 
+        log(command, success=True) 
 
-    except Exception as e:   # если возникла ошибка
+    except Exception as e: 
+        # Обработка ошибок при копировании
         print(f"Ошибка: не удалось скопировать '{what}' '{where}' — {e}") 
-        log(command, success=False, error=str(e))   # логируем неудачное выполнение 
+        log(command, success=False, error=str(e))

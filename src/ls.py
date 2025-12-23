@@ -4,34 +4,52 @@ import time
 from log import log
 
 
-def ls(st):
+def ls(st: list) -> None:
+    """
+    Функция для отображения содержимого директории
     
-    long_f = '' # переменная для хранения флага
-    path = '.'    # путь по умолчанию — текущая директория
-
-    # разбор токенов, начиная со второго (первый всегда "ls")
+    Параметры:
+    st - список аргументов команды (первый элемент - 'ls')
+    """
+    
+    long_f = ''   # Флаг подробного вывода (-l)
+    path = '.'    # Путь к директории (по умолчанию текущая)
+    
+    # Обработка аргументов команды
     if len(st) > 1:
-        for t in st[1:]:
-            if t ==  '-l': # если токен "-l", считаем его флагом
-                long_f = t
-            else:
-                path = t
-
-    command = ' '.join(st) # собираем команду обратно в строку для логирования
+        # Проверяем наличие флага подробного вывода
+        if st[1] == '-l':
+            long_f = st[1]  # Устанавливаем флаг подробного вывода
+        else:
+            path = st[1]    # Устанавливаем указанный путь
+    
+    command = ' '.join(st)  # Полная команда для логирования
+    
     try:
-        entries = os.listdir(path) # получаем список файлов и папок в директории
+        # Получаем список файлов и папок в указанной директории
+        entries = os.listdir(path)
+        
+        # Обрабатываем каждый элемент в директории
         for entry in entries:
-            full_path = os.path.join(path, entry) # формируем полный путь
+            full_path = os.path.join(path, entry)  # Полный путь к элементу
             
-            if long_f == '-l':  # если указан флаг "-l", выводим подробную информацию
-                stats = os.stat(full_path)   # получаем статистику файла
-                permissions = stat.filemode(stats.st_mode)  # права доступа
-                size = stats.st_size  # размер файла в байтах
-                mtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stats.st_mtime)) # время последнего изменения в читаемом формате
+            if long_f == '-l':
+                # Подробный вывод с дополнительной информацией
+                stats = os.stat(full_path)  # Получаем статистику файла
+                permissions = stat.filemode(stats.st_mode)  # Права доступа
+                size = stats.st_size  # Размер файла
+                # Время последнего изменения
+                mtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stats.st_mtime))
+                # Форматированный вывод с выравниванием
                 print(f'{permissions} {size:>10} {mtime} {entry}')
             else:
-                print(entry)  # если флаг не указан, выводим только имя файла
+                # Простой вывод только имен файлов
+                print(entry) 
+                
+        # Логирование успешного выполнения
         log(command, success=True)
+        
     except Exception as e:
+        # Обработка ошибок при чтении директории
         print(f"Ошибка: не удалось отобразить '{path}' — {e}")
         log(command, success=False, error=str(e))
